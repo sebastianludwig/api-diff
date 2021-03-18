@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+require "api_diff"
+
+begin
+  ApiDiff::Cli.new.run!(ARGV)
+rescue ApiDiff::Error => e
+  abort e.message
+end
