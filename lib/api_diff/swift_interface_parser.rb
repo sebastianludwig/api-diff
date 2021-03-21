@@ -98,10 +98,6 @@ module ApiDiff
       end
     end
 
-    def strip_packages(definition)
-      definition&.gsub(/\w+\.(\w+)/, "\\1")
-    end
-
     def strip_internal_parameter_names(signature)
       signature.gsub(/(\w+)\s\w+:/, "\\1:")
     end

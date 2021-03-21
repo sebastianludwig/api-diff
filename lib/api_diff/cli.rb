@@ -5,6 +5,7 @@ module ApiDiff
     def parse(arguments)
       parser = OptionParser.new do |opts|
         opts.on("-f", "--format FORMAT", [:swiftinterface])
+        opts.on("-s", "--strip-packages")
       end
       
       options = {}

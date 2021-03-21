@@ -1,8 +1,12 @@
 require "test_helper"
 
 class SwiftInterfaceParserTest < Minitest::Test
+  def parser
+    ApiDiff::SwiftInterfaceParser.new "strip-packages": true
+  end
+
   def test_returns_api
-    assert_instance_of ApiDiff::Api, ApiDiff::SwiftInterfaceParser.new.parse("")
+    assert_instance_of ApiDiff::Api, parser.parse("")
   end
 
   def test_classes
@@ -16,7 +20,7 @@ class SwiftInterfaceParserTest < Minitest::Test
       public class Fourth : Swift.Codable, Swift.Hashable {
       }
     EOF
-    api = ApiDiff::SwiftInterfaceParser.new.parse(input)
+    api = parser.parse(input)
     classes = api.classes
     assert_equal 4, classes.size
 
@@ -37,7 +41,7 @@ class SwiftInterfaceParserTest < Minitest::Test
     assert_equal "class Fourth : Codable, Hashable", fourth.declaration
   end
 
-  def test_variables
+  def test_properties
     input = <<~EOF
       public class FirstClass {
         public var name: Swift.String?
@@ -51,7 +55,7 @@ class SwiftInterfaceParserTest < Minitest::Test
         }
       }
     EOF
-    api = ApiDiff::SwiftInterfaceParser.new.parse(input)
+    api = parser.parse(input)
     properties = api.classes.first.properties
     assert_equal 4, properties.size
     
@@ -89,7 +93,7 @@ class SwiftInterfaceParserTest < Minitest::Test
       }
     EOF
 
-    api = ApiDiff::SwiftInterfaceParser.new.parse(input)
+    api = parser.parse(input)
     functions = api.classes.first.functions
     assert_equal 6, functions.size
 
@@ -140,7 +144,7 @@ class SwiftInterfaceParserTest < Minitest::Test
       }
     EOF
 
-    api = ApiDiff::SwiftInterfaceParser.new.parse(input)
+    api = parser.parse(input)
     classes = api.classes
     assert_equal 3, classes.size
 
@@ -171,7 +175,7 @@ class SwiftInterfaceParserTest < Minitest::Test
       }
     EOF
 
-    api = ApiDiff::SwiftInterfaceParser.new.parse(input)
+    api = parser.parse(input)
     interfaces = api.interfaces
     assert_equal 2, interfaces.size
 
@@ -212,7 +216,7 @@ class SwiftInterfaceParserTest < Minitest::Test
       }
     EOF
 
-    api = ApiDiff::SwiftInterfaceParser.new.parse(input)
+    api = parser.parse(input)
     interfaces = api.interfaces
     assert_equal 3, interfaces.size
 
@@ -247,7 +251,7 @@ class SwiftInterfaceParserTest < Minitest::Test
       }
     EOF
 
-    api = ApiDiff::SwiftInterfaceParser.new.parse(input)
+    api = parser.parse(input)
     enums = api.enums
     assert_equal 3, enums.size
 
