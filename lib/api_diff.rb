@@ -8,7 +8,7 @@ require "api_diff/function"
 require "api_diff/property"
 require "api_diff/parser"
 require "api_diff/swift_interface_parser"
-require "api_diff/android_bcv_parser"
+require "api_diff/kotlin_bcv_parser"
 require "api_diff/cli"
 
 module ApiDiff

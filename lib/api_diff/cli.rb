@@ -4,8 +4,9 @@ module ApiDiff
   class Cli
     def parse(arguments)
       parser = OptionParser.new do |opts|
-        opts.on("-f", "--format FORMAT", [:swiftinterface])
+        opts.on("-f", "--format FORMAT", ["swift-interface", "kotlin-bcv"])
         opts.on("-s", "--strip-packages")
+        opts.on("-n", "--normalize")
       end
       
       options = {}
@@ -26,13 +27,14 @@ module ApiDiff
     def run!(arguments)
       options = parse(arguments)
       raise Error.new "Input file not found: #{options[:input]}" if not File.exist? options[:input]
-      content = IO.read options[:input]
 
-      if options[:format] == :swiftinterface
-        parser = SwiftInterfaceParser.new
+      if options[:format] == "swift-interface"
+        parser = SwiftInterfaceParser.new(options)
+      elsif options[:format] == "kotlin-bcv"
+        parser = KotlinBCVParser.new(options)
       end
 
-      api = parser.parse content
+      api = parser.parse(IO.read(options[:input]))
       puts api.to_s
     end
   end

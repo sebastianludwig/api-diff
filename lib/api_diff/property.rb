@@ -1,5 +1,12 @@
 module ApiDiff
   class Property
+    @writable_keyword = "var"
+    @readonly_keyword = "let"
+
+    class << self
+      attr_accessor :writable_keyword, :readonly_keyword
+    end
+
     attr_reader :name, :type
 
     def initialize(name:, type:, writable:, static:)
@@ -28,7 +35,7 @@ module ApiDiff
     def to_s
       result = []
       result << "static" if is_static?
-      result << (is_writable? ? "var" : "let")
+      result << (is_writable? ? self.class.writable_keyword : self.class.readonly_keyword)
       result << "#{name}: #{type}"
       result.join(" ")
     end
