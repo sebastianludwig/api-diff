@@ -1,11 +1,12 @@
 PATH
   remote: .
   specs:
-    api_diff (0.1.0)
+    api_diff (0.2.0)
 
 GEM
   remote: https://rubygems.org/
   specs:
+    byebug (11.1.3)
     minitest (5.14.4)
     rake (12.3.3)
 
@@ -14,6 +15,7 @@ PLATFORMS
 
 DEPENDENCIES
   api_diff!
+  byebug (~> 11)
   minitest (~> 5.0)
   rake (~> 12.0)
 
