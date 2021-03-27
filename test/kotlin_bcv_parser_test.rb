@@ -1,12 +1,14 @@
 require "test_helper"
 
 class KotlinBCVParserTest < Minitest::Test
-  def parser(strip: true, normalize: false)
-    ApiDiff::KotlinBCVParser.new "strip-packages": strip, normalize: normalize
+  def parse(content, short_names: true, normalize: false)
+    parser = ApiDiff::KotlinBCVParser.new "short-names": short_names, normalize: normalize
+    parser.parse(content)
+    parser.api
   end
 
   def test_returns_api
-    assert_instance_of ApiDiff::Api, parser.parse("")
+    assert_instance_of ApiDiff::Api, parse("")
   end
 
   def test_classes
@@ -23,7 +25,7 @@ class KotlinBCVParserTest < Minitest::Test
       }
     EOF
 
-    api = parser(strip: false).parse(input)
+    api = parse(input, short_names: false)
     classes = api.classes
     assert_equal 5, classes.size
 
@@ -63,7 +65,7 @@ class KotlinBCVParserTest < Minitest::Test
       }
     EOF
 
-    api = parser.parse(input)
+    api = parse(input)
     functions = api.classes.first.functions
     assert_equal 9, functions.size
 
@@ -110,7 +112,7 @@ class KotlinBCVParserTest < Minitest::Test
       }
     EOF
 
-    api = parser.parse(input)
+    api = parse(input)
     functions = api.classes.first.functions
     assert_equal 0, functions.size
   end
@@ -126,7 +128,7 @@ class KotlinBCVParserTest < Minitest::Test
       }
     EOF
 
-    api = parser.parse(input)
+    api = parse(input)
     assert_equal 0, api.classes.first.functions.size
     properties = api.classes.first.properties
     assert_equal 4, properties.size
@@ -171,7 +173,7 @@ class KotlinBCVParserTest < Minitest::Test
       }
     EOF
 
-    api = parser.parse(input)
+    api = parse(input)
     enums = api.enums
     assert_equal 1, enums.size
 
@@ -201,7 +203,7 @@ class KotlinBCVParserTest < Minitest::Test
       }
     EOF
 
-    api = parser(normalize: true).parse(input)
+    api = parse(input, normalize: true)
     
     first_class = api.classes.first
     assert_equal 3, first_class.functions.size

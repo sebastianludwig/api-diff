@@ -2,10 +2,7 @@ module ApiDiff
   # Biggest Drawback: Does not support optionals :-/
   class KotlinBCVParser < Parser
     def parse(content)
-      Property.writable_keyword = "var"
       Property.readonly_keyword = "val"
-
-      api = Api.new
 
       sections = content.scan(/^.+?{$.*?^}$/m)
       sections.each do |section|
@@ -23,15 +20,13 @@ module ApiDiff
       end
 
       normalize!(api) if @options[:normalize]
-
-      api
     end
 
     private
 
     def parse_class(class_content)
-      name = class_content.match(/public.+class ([^\s]+)/)[1]
-      cls = Class.new(transform_package_path(name))
+      fully_qualified_name = transform_package_path class_content.match(/public.+class ([^\s]+)/)[1]
+      cls = Class.new(strip_packages(fully_qualified_name), fully_qualified_name)
       cls.parents = parse_parents(class_content)
       cls.functions = parse_functions(class_content)
       extract_properties(cls)
@@ -39,8 +34,8 @@ module ApiDiff
     end
 
     def parse_enum(enum_content)
-      name = enum_content.match(/public.+class ([^\s]+)/)[1]
-      enum = Enum.new(transform_package_path(name))
+      fully_qualified_name = transform_package_path enum_content.match(/public.+class ([^\s]+)/)[1]
+      enum = Enum.new(strip_packages(fully_qualified_name), fully_qualified_name)
       enum.cases = parse_enum_cases(enum_content)
       enum.functions = parse_functions(enum_content)
       extract_properties(enum)
@@ -50,7 +45,7 @@ module ApiDiff
     def parse_parents(content)
       parents_match = content.match(/\A.+?: (.+?) \{$/)
       return [] if parents_match.nil?
-      parents_match[1].split(",").map { |p| transform_package_path(p.strip) }
+      parents_match[1].split(",").map { |p| strip_packages(transform_package_path(p.strip)) }
     end
 
     def parse_functions(content)
@@ -59,12 +54,12 @@ module ApiDiff
         next if match[:name]&.start_with? "component" # don't add data class `componentX` methods
         params_range = ((match.begin(:params) - match.begin(:signature))...(match.end(:params) - match.begin(:signature)))
         signature = match[:signature]
-        signature[params_range] = map_vm_types(match[:params]).join(", ")
+        signature[params_range] = map_jvm_types(match[:params]).join(", ")
         signature.gsub!(/synthetic ?/, "") # synthetic or not, it's part of the API
         Function.new(
           name: (match[:name] || match[:init]),
           signature: signature,
-          return_type: match[:init].nil? ? map_vm_types(match[:return_type]).join : nil,
+          return_type: match[:init].nil? ? map_jvm_types(match[:return_type]).join : nil,
           static: !match[:static].nil?,
           constructor: (not match[:init].nil?)
         )
@@ -103,10 +98,10 @@ module ApiDiff
     end
 
     def transform_package_path(path)
-      strip_packages(path.gsub("/", "."))
+      path.gsub("/", ".")
     end
 
-    def map_vm_types(types)
+    def map_jvm_types(types)
       mapping = {
         "Z" => "Boolean",
         "B" => "Byte",
@@ -121,7 +116,7 @@ module ApiDiff
       vm_types_regexp = /(?<array>\[)?(?<type>Z|B|C|S|I|J|F|D|V|(L(?<class>[^;]+);))/
       all_matches(types, vm_types_regexp).map do |match|
         if match[:class]
-          result = transform_package_path match[:class]
+          result = strip_packages(transform_package_path(match[:class]))
         else
           result = mapping[match[:type]]
         end

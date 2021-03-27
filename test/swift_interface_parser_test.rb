@@ -1,12 +1,14 @@
 require "test_helper"
 
 class SwiftInterfaceParserTest < Minitest::Test
-  def parser
-    ApiDiff::SwiftInterfaceParser.new "strip-packages": true
+  def parse(content)
+    parser = ApiDiff::SwiftInterfaceParser.new "short-names": true
+    parser.parse(content)
+    parser.api
   end
 
   def test_returns_api
-    assert_instance_of ApiDiff::Api, parser.parse("")
+    assert_instance_of ApiDiff::Api, parse("")
   end
 
   def test_classes
@@ -20,7 +22,7 @@ class SwiftInterfaceParserTest < Minitest::Test
       public class Fourth : Swift.Codable, Swift.Hashable {
       }
     EOF
-    api = parser.parse(input)
+    api = parse(input)
     classes = api.classes
     assert_equal 4, classes.size
 
@@ -55,7 +57,7 @@ class SwiftInterfaceParserTest < Minitest::Test
         }
       }
     EOF
-    api = parser.parse(input)
+    api = parse(input)
     properties = api.classes.first.properties
     assert_equal 4, properties.size
     
@@ -93,7 +95,7 @@ class SwiftInterfaceParserTest < Minitest::Test
       }
     EOF
 
-    api = parser.parse(input)
+    api = parse(input)
     functions = api.classes.first.functions
     assert_equal 6, functions.size
 
@@ -144,7 +146,7 @@ class SwiftInterfaceParserTest < Minitest::Test
       }
     EOF
 
-    api = parser.parse(input)
+    api = parse(input)
     classes = api.classes
     assert_equal 3, classes.size
 
@@ -175,7 +177,7 @@ class SwiftInterfaceParserTest < Minitest::Test
       }
     EOF
 
-    api = parser.parse(input)
+    api = parse(input)
     interfaces = api.interfaces
     assert_equal 2, interfaces.size
 
@@ -216,7 +218,7 @@ class SwiftInterfaceParserTest < Minitest::Test
       }
     EOF
 
-    api = parser.parse(input)
+    api = parse(input)
     interfaces = api.interfaces
     assert_equal 3, interfaces.size
 
@@ -241,8 +243,9 @@ class SwiftInterfaceParserTest < Minitest::Test
         case a
       }
       @frozen public enum Beta {
-        case c
-        case d
+        case c(number: Swift.Int)
+        case d(name: Swift.String? = nil)
+        case lambda(func: ((Swift.Double) -> Swift.Void)?)
       }
       @frozen public enum Gamma : Swift.String, Swift.CaseIterable {
         case e
@@ -251,7 +254,7 @@ class SwiftInterfaceParserTest < Minitest::Test
       }
     EOF
 
-    api = parser.parse(input)
+    api = parse(input)
     enums = api.enums
     assert_equal 3, enums.size
 
@@ -261,12 +264,138 @@ class SwiftInterfaceParserTest < Minitest::Test
 
     beta = enums[1]
     assert_equal "Beta", beta.name
-    assert_equal ["c", "d"], beta.cases
+    assert_equal ["c(number: Int)", "d(name: String? = nil)", "lambda(func: ((Double) -> Void)?)"], beta.cases
 
     gamma = enums[2]
     assert_equal "Gamma", gamma.name
     assert_equal 3, gamma.cases.size
     assert_equal ["e", "f", "g"], gamma.cases
     assert_equal ["String", "CaseIterable"], gamma.parents
+  end
+
+  def test_ignores_header_noise
+    input = <<~EOF
+      // swift-interface-format-version: 1.0
+      // swift-compiler-version: Apple Swift version 5.3 (swiftlang-1200.0.29.2 clang-1200.0.30.1)
+      // swift-module-flags: -target arm64-apple-ios12.0 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -module-name ePA
+      import AVFoundation
+      import CoreMotion
+      import CoreNFC
+      import Foundation
+      import Security
+      import Swift
+      import UIKit
+      @_exported import MyLib
+      import os.log
+      import os
+      public class NotIgnored {
+      }
+    EOF
+
+    api = parse(input)
+
+    assert api.class(named: "NotIgnored")
+  end
+
+  def test_full_name_qualification
+    input = <<~EOF
+      @_exported import MyLib
+      public class Qualified {
+      }
+    EOF
+
+    api = parse(input)
+
+    qualified = api.classes.first
+    assert_equal "MyLib.Qualified", qualified.fully_qualified_name
+  end
+
+  def test_nested_types
+    input = <<~EOF
+      public class OuterClass {
+        public class InnerClass {
+          public func a()
+        }
+      }
+      extension OuterClass {
+        @frozen public enum ExtensionInner {
+          case ei1
+        }
+      }
+      public enum OuterEnum {
+        public class EnumInnerClass {
+        }
+      }
+      public enum Level1 {
+        public class Level2 {
+          public enum Level3 {
+            public class Level4 {
+
+            }
+          }
+        }
+      }
+    EOF
+
+    api = parse(input)
+
+    inner_class = api.class(named: "InnerClass")
+    assert_equal "OuterClass.InnerClass", inner_class.fully_qualified_name
+    assert_equal "a", inner_class.functions.first.name
+
+    extension_inner = api.enum(named: "ExtensionInner")
+    assert_equal ["ei1"], extension_inner.cases
+    assert_equal "OuterClass.ExtensionInner", extension_inner.fully_qualified_name
+
+    enum_inner_class = api.class(named: "EnumInnerClass")
+    assert_equal "OuterEnum.EnumInnerClass", enum_inner_class.fully_qualified_name
+
+    assert api.enum(named: "Level1")
+    assert api.class(named: "Level2")
+    assert api.enum(named: "Level3")
+    assert api.class(named: "Level4")
+    assert_equal "Level1.Level2.Level3.Level4", api.class(named: "Level4").fully_qualified_name
+  end
+
+  def test_nested_name_conflict
+    input = <<~EOF
+      public class Conflict {
+      }
+      public enum Nested {
+        public class Conflict {
+        }
+      }
+      extension Conflict {
+        public func topLevel()
+      }
+      extension Nested.Conflict {
+        public func nested()
+      }
+    EOF
+
+    api = parse(input)
+
+    assert_equal 2, api.classes.size
+
+    top_level = api.class(fully_qualified_name: "Conflict")
+    assert_equal "topLevel", top_level.functions.first.name
+
+    nested = api.class(fully_qualified_name: "Nested.Conflict")
+    assert_equal "nested", nested.functions.first.name
+  end
+
+  def test_qualified_one_line_extensions
+    input = <<~EOF
+      @_exported import MyLib
+      public enum Enum {
+        case a
+      }
+      extension MyLib.Enum : Swift.Hashable {}
+    EOF
+
+    api = parse(input)
+    enum = api.enums.first
+
+    assert_equal ["Hashable"], enum.parents
   end
 end

@@ -5,7 +5,7 @@ module ApiDiff
     def parse(arguments)
       parser = OptionParser.new do |opts|
         opts.on("-f", "--format FORMAT", ["swift-interface", "kotlin-bcv"])
-        opts.on("-s", "--strip-packages")
+        opts.on("-s", "--short-names", "Use short instead of fully qualified names")
         opts.on("-n", "--normalize")
       end
       
@@ -34,8 +34,8 @@ module ApiDiff
         parser = KotlinBCVParser.new(options)
       end
 
-      api = parser.parse(IO.read(options[:input]))
-      puts api.to_s
+      parser.parse(IO.read(options[:input]))
+      puts parser.api.to_s(fully_qualified_names: !options[:"short-names"])
     end
   end
 end
