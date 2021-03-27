@@ -1,5 +1,9 @@
 module ApiDiff
   class Type
+    def self.type_name
+      name.split('::').last.downcase
+    end
+
     attr_reader :name, :fully_qualified_name
     attr_accessor :parents, :functions, :properties
 
@@ -12,9 +16,8 @@ module ApiDiff
     end
 
     def declaration(fully_qualified_name: false)
-      kind = self.class.name.split('::').last.downcase
       name = fully_qualified_name ? self.fully_qualified_name : self.name
-      result = "#{kind} #{name}"
+      result = "#{self.class.type_name} #{name}"
       result += " : #{parents.join(", ")}" if has_parents?
       result
     end

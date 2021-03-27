@@ -2,7 +2,7 @@ module ApiDiff
   # Biggest Drawback: Does not support optionals :-/
   class KotlinBCVParser < Parser
     def parse(content)
-      Property.readonly_keyword = "val"
+      Property.readonly_keyword = "val" unless @options[:normalize]
 
       sections = content.scan(/^.+?{$.*?^}$/m)
       sections.each do |section|
@@ -126,8 +126,6 @@ module ApiDiff
     end
 
     def normalize!(api)
-      Property.readonly_keyword = "let"
-
       # remove abstract & final
       # fun -> func
       # <init> -> init

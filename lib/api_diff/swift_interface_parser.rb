@@ -1,6 +1,8 @@
 module ApiDiff
   class SwiftInterfaceParser < Parser
     def parse(content)
+      Interface.type_name = "protocol" unless @options[:normalize]
+
       module_name_match = content.match(/@_exported import (\w+)/)
       container_types = module_name_match ? module_name_match[1] : []
       parse_blocks(content, container_types)
@@ -135,6 +137,5 @@ module ApiDiff
     def strip_internal_parameter_names(signature)
       signature.gsub(/(\w+)\s\w+:/, "\\1:")
     end
-
   end
 end
