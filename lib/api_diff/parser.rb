@@ -14,7 +14,7 @@ module ApiDiff
       string.to_enum(:scan, regex).map { Regexp.last_match }
     end
 
-    def strip_packages(definition)
+    def unqualify(definition)
       return definition unless @options[:"short-names"]
       definition&.gsub(/(?:\w+\.){1,}(\w+)/, "\\1")
     end

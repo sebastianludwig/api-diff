@@ -93,7 +93,7 @@ module ApiDiff
     def parse_parents(content)
       parents_match = content.match(/\A.+?: (.+?) \{\}?$/)
       return [] if parents_match.nil?
-      parents_match[1].split(",").map { |p| strip_packages(p.strip) }
+      parents_match[1].split(",").map { |p| unqualify(p.strip) }
     end
 
     def parse_properties(content)
@@ -101,7 +101,7 @@ module ApiDiff
       all_matches(content, property_regexp).map do |match|
         Property.new(
           name: match[:name],
-          type: strip_packages(match[:type]),
+          type: unqualify(match[:type]),
           writable: (match[:varlet] == "var" && (match[:get] == nil || match[:set] != nil)),
           static: !match[:static].nil?
         )
@@ -113,8 +113,8 @@ module ApiDiff
       all_matches(content, method_regexp).map do |match|
         Function.new(
           name: (match[:name] || match[:init]),
-          signature: strip_internal_parameter_names(strip_packages(match[:signature])).strip,
-          return_type: strip_packages(match[:return_type]),
+          signature: strip_internal_parameter_names(unqualify(match[:signature])).strip,
+          return_type: unqualify(match[:return_type]),
           static: !match[:static].nil?,
           constructor: (not match[:init].nil?)
         )
@@ -124,7 +124,7 @@ module ApiDiff
     def parse_enum_cases(content)
       case_regexp = /case (?<name>.+)$/
       all_matches(content, case_regexp).map do |match|
-        strip_packages(match[:name])
+        unqualify(match[:name])
       end
     end
 

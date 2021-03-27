@@ -26,7 +26,7 @@ module ApiDiff
 
     def parse_class(class_content)
       fully_qualified_name = transform_package_path class_content.match(/public.+class ([^\s]+)/)[1]
-      cls = Class.new(strip_packages(fully_qualified_name), fully_qualified_name)
+      cls = Class.new(unqualify(fully_qualified_name), fully_qualified_name)
       cls.parents = parse_parents(class_content)
       cls.functions = parse_functions(class_content)
       extract_properties(cls)
@@ -35,7 +35,7 @@ module ApiDiff
 
     def parse_enum(enum_content)
       fully_qualified_name = transform_package_path enum_content.match(/public.+class ([^\s]+)/)[1]
-      enum = Enum.new(strip_packages(fully_qualified_name), fully_qualified_name)
+      enum = Enum.new(unqualify(fully_qualified_name), fully_qualified_name)
       enum.cases = parse_enum_cases(enum_content)
       enum.functions = parse_functions(enum_content)
       extract_properties(enum)
@@ -45,7 +45,7 @@ module ApiDiff
     def parse_parents(content)
       parents_match = content.match(/\A.+?: (.+?) \{$/)
       return [] if parents_match.nil?
-      parents_match[1].split(",").map { |p| strip_packages(transform_package_path(p.strip)) }
+      parents_match[1].split(",").map { |p| unqualify(transform_package_path(p.strip)) }
     end
 
     def parse_functions(content)
@@ -116,7 +116,7 @@ module ApiDiff
       vm_types_regexp = /(?<array>\[)?(?<type>Z|B|C|S|I|J|F|D|V|(L(?<class>[^;]+);))/
       all_matches(types, vm_types_regexp).map do |match|
         if match[:class]
-          result = strip_packages(transform_package_path(match[:class]))
+          result = unqualify(transform_package_path(match[:class]))
         else
           result = mapping[match[:type]]
         end
