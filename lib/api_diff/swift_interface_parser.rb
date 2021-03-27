@@ -15,13 +15,13 @@ module ApiDiff
       sections = content.scan(/^[^\n]+?{$.*?^}$/m)
       sections.each do |section|
         first_line = section.split("\n")[0]
-        if first_line.match? "public class"
+        if first_line.include? "public class"
           parse_class(section, container_types)
-        elsif first_line.match? "public protocol"
+        elsif first_line.include? "public protocol"
           parse_ptotocol(section, container_types)
-        elsif first_line.match? "extension"
+        elsif first_line.include? "extension"
           parse_extension(section, container_types)
-        elsif first_line.match? "public enum"
+        elsif first_line.include? "public enum"
           parse_enum(section, container_types)
         end
       end

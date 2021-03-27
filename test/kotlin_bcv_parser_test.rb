@@ -152,6 +152,29 @@ class KotlinBCVParserTest < Minitest::Test
     assert_equal "fqdn", fqdn.name
   end
 
+  def test_interfaces
+    input = <<~EOF
+      public abstract interface class com/package/WithFunctions {
+        public abstract fun abstractAction ()V
+      }
+      public abstract interface class com/nested/package/WithProperties {
+        public final fun getName ()Ljava/lang/String;
+        public final fun setName (Ljava/lang/String;)V
+      }
+    EOF
+
+    api = parse(input)
+    interfaces = api.interfaces
+    assert_equal 2, interfaces.size
+
+    with_functions = interfaces[0]
+    assert_equal "abstractAction", with_functions.functions[0].name
+
+    with_properties = interfaces[1]
+    assert_equal 1, with_properties.properties.size
+    assert_equal "name", with_properties.properties[0].name
+  end
+
   def test_companion_objects
     # TypeCode
     # Metadata

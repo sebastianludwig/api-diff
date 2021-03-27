@@ -9,13 +9,11 @@ module ApiDiff
         section.strip!
         first_line = section.split("\n")[0]
         if first_line.include?(" : java/lang/Enum")
-          api.enums << parse_enum(section)
+          parse_enum(section)
+        elsif first_line.include?("interface class")
+          parse_interface(section)
         elsif first_line.match?(/public.+class/)
-          api.classes << parse_class(section)
-        # elsif first_line.match?(/public protocol/)
-        #   api.interfaces << parse_interface(section)
-        # elsif first_line.match?(/extension/)
-        #   parse_extension(api, section)
+          parse_class(section)
         end
       end
 
@@ -25,21 +23,34 @@ module ApiDiff
     private
 
     def parse_class(class_content)
-      fully_qualified_name = transform_package_path class_content.match(/public.+class ([^\s]+)/)[1]
-      cls = Class.new(unqualify(fully_qualified_name), fully_qualified_name)
+      qualified_name = transform_package_path class_content.match(/public.+class ([^\s]+)/)[1]
+
+      cls = Class.new(unqualify(qualified_name), qualified_name)
       cls.parents = parse_parents(class_content)
       cls.functions = parse_functions(class_content)
       extract_properties(cls)
-      cls
+      api.classes << cls
+    end
+
+    def parse_interface(interface_content)
+      qualified_name = transform_package_path interface_content.match(/public.+class ([^\s]+)/)[1]
+
+      interface = Interface.new(unqualify(qualified_name), qualified_name)
+      interface.parents = parse_parents(interface_content)
+      interface.functions = parse_functions(interface_content)
+      extract_properties(interface)
+
+      api.interfaces << interface
     end
 
     def parse_enum(enum_content)
-      fully_qualified_name = transform_package_path enum_content.match(/public.+class ([^\s]+)/)[1]
-      enum = Enum.new(unqualify(fully_qualified_name), fully_qualified_name)
+      qualified_name = transform_package_path enum_content.match(/public.+class ([^\s]+)/)[1]
+
+      enum = Enum.new(unqualify(qualified_name), qualified_name)
       enum.cases = parse_enum_cases(enum_content)
       enum.functions = parse_functions(enum_content)
       extract_properties(enum)
-      enum
+      api.enums << enum
     end
 
     def parse_parents(content)
