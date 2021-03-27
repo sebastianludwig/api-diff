@@ -31,14 +31,17 @@ gem install api_diff
 All output is printed to `STDOUT`.
 
 - `--format`: required - specifies the format of the input file (see below).
-- `--strip-packages`: optional - shorten type references by removing package qualifiers.
+- `--short-names`: optional - shorten type references by removing package qualifiers.
 - `--normalize`: optional - transform API to a common, cross-language baseline. Less accurate when comparing APIs of the same language but helpful when comparing across languages. (Early WIP)
-
 
 ### Supported Formats
 
-- `swiftinterface`: Swift module interface files like they are created for frameworks (with library evolution support turned on..?).
+- `swift-interface`: Swift module interface files like they are created for frameworks (with library evolution support turned on..?).
 - `kotlin-bcv`: The output of [Binary Compatibility Validator](https://github.com/Kotlin/binary-compatibility-validator).
+
+### Limitations
+
+- `kotlin-bcv` currently does not support nullability.
 
 ## Development
 
