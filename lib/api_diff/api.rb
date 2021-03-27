@@ -20,11 +20,15 @@ module ApiDiff
       enums.find { |e| e.name == named || e.fully_qualified_name == fully_qualified_name }
     end
 
-    def to_s(fully_qualified_names: true)
+    def to_s(fully_qualified_names: true, global_sort: false)
       result = []
-      result << enums.sort.map { |e| e.to_s(fully_qualified_name: fully_qualified_names) }
-      result << interfaces.sort.map { |i| i.to_s(fully_qualified_name: fully_qualified_names) }
-      result << classes.sort.map { |c| c.to_s(fully_qualified_name: fully_qualified_names) }
+      if global_sort
+        result << (enums + interfaces + classes).sort.map { |e| e.to_s(fully_qualified_name: fully_qualified_names) }
+      else
+        result << enums.sort.map { |e| e.to_s(fully_qualified_name: fully_qualified_names) }
+        result << interfaces.sort.map { |i| i.to_s(fully_qualified_name: fully_qualified_names) }
+        result << classes.sort.map { |c| c.to_s(fully_qualified_name: fully_qualified_names) }
+      end
       result.flatten.join("\n\n")
     end
   end

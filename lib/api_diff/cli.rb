@@ -7,6 +7,7 @@ module ApiDiff
         opts.on("-f", "--format FORMAT", ["swift-interface", "kotlin-bcv"])
         opts.on("-s", "--short-names", "Use short instead of fully qualified names")
         opts.on("-n", "--normalize")
+        opts.on("-g", "--global-sort")
       end
       
       options = {}
@@ -35,7 +36,11 @@ module ApiDiff
       end
 
       parser.parse(IO.read(options[:input]))
-      puts parser.api.to_s(fully_qualified_names: !options[:"short-names"])
+      output = parser.api.to_s(
+        fully_qualified_names: !options[:"short-names"], 
+        global_sort: options[:"global-sort"]
+      )
+      puts output
     end
   end
 end

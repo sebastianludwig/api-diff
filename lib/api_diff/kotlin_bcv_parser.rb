@@ -137,11 +137,14 @@ module ApiDiff
     end
 
     def normalize!(api)
+      api.classes.reject! { |c| c.parents == ["Factory"] }
+      api.classes.reject! { |c| c.name.start_with? "Dagger" }
+
       # remove abstract & final
       # fun -> func
       # <init> -> init
       # remove space before (
-      (api.classes + api.enums).flat_map(&:functions).each do |f|
+      (api.classes + api.interfaces + api.enums).flat_map(&:functions).each do |f|
         f.signature.gsub!(/(?:abstract )?(?:final )?fun (<?\w+>?) \(/, "func \\1(")
         f.signature.gsub!("func <init>", "init")
       end
