@@ -15,6 +15,10 @@ module ApiDiff
       @properties = []
     end
 
+    def package
+      fully_qualified_name.split(".")[0..-2].join(".")
+    end
+
     def declaration(fully_qualified_name: false)
       name = fully_qualified_name ? self.fully_qualified_name : self.name
       result = "#{self.class.type_name} #{name}"

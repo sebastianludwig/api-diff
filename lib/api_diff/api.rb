@@ -20,10 +20,17 @@ module ApiDiff
       enums.find { |e| e.name == named || e.fully_qualified_name == fully_qualified_name }
     end
 
-    def to_s(fully_qualified_names: true, global_sort: false)
+    def to_s(fully_qualified_names: true, order: :global)
       result = []
-      if global_sort
+      if order == "global"
         result << (enums + interfaces + classes).sort.map { |e| e.to_s(fully_qualified_name: fully_qualified_names) }
+      elsif order == "fqn"
+        types = enums + interfaces + classes
+        type_order = { "enum" => 1, "interface" => 2, "class" => 3 }
+        types.sort! do |t1, t2|
+          [t1.package, type_order[t1.class.type_name], t1.name] <=> [t2.package, type_order[t2.class.type_name], t2.name]
+        end
+        result << types.map { |e| e.to_s(fully_qualified_name: fully_qualified_names) }
       else
         result << enums.sort.map { |e| e.to_s(fully_qualified_name: fully_qualified_names) }
         result << interfaces.sort.map { |i| i.to_s(fully_qualified_name: fully_qualified_names) }

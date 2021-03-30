@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    api_diff (0.2.0)
+    api_diff (0.3.1)
 
 GEM
   remote: https://rubygems.org/
@@ -12,6 +12,7 @@ GEM
 
 PLATFORMS
   ruby
+  universal-darwin-20
 
 DEPENDENCIES
   api_diff!
@@ -20,4 +21,4 @@ DEPENDENCIES
   rake (~> 12.0)
 
 BUNDLED WITH
-   2.1.4
+   2.2.1
