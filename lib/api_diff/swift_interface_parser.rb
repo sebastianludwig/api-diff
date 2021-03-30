@@ -19,7 +19,7 @@ module ApiDiff
           parse_class(section, container_types)
         elsif first_line.include? "public protocol"
           parse_ptotocol(section, container_types)
-        elsif first_line.include? "extension"
+        elsif first_line.start_with? "extension"
           parse_extension(section, container_types)
         elsif first_line.include? "public enum"
           parse_enum(section, container_types)
