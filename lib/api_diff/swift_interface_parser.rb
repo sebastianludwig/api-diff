@@ -17,6 +17,8 @@ module ApiDiff
         first_line = section.split("\n")[0]
         if first_line.include? "public class"
           parse_class(section, container_types)
+        elsif first_line.include? "public struct"
+          parse_struct(section, container_types)
         elsif first_line.include? "public protocol"
           parse_ptotocol(section, container_types)
         elsif first_line.start_with? "extension"
@@ -46,6 +48,18 @@ module ApiDiff
       parse_nested_types(class_content, [*container_types, name])
     end
 
+    def parse_struct(struct_content, container_types)
+      name = struct_content.match(/public struct (\w+)/)[1]
+
+      struct = Struct.new(name, qualified_name(name, container_types))
+      struct.parents = parse_parents(struct_content)
+      struct.properties = parse_properties(struct_content)
+      struct.functions = parse_functions(struct_content)
+      api.structs << struct
+
+      parse_nested_types(struct_content, [*container_types, name])
+    end
+
     def parse_ptotocol(protocol_content, container_types)
       name = protocol_content.match(/public protocol (\w+)/)[1]
 
@@ -62,6 +76,7 @@ module ApiDiff
       name = content.match(/extension ([\w\.]+)/)[1]
 
       base_type = api.class(fully_qualified_name: qualified_name(name, container_types))
+      base_type ||= api.struct(fully_qualified_name: qualified_name(name, container_types))
       base_type ||= api.interface(fully_qualified_name: qualified_name(name, container_types))
       base_type ||= api.enum(fully_qualified_name: qualified_name(name, container_types))
       raise Error.new "Unable to find base type for extension `#{name}`" if base_type.nil?

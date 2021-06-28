@@ -1,15 +1,20 @@
 module ApiDiff
   class Api
-    attr_accessor :classes, :interfaces, :enums
+    attr_accessor :classes, :structs, :interfaces, :enums
 
     def initialize
       @classes = []
+      @structs = []
       @interfaces = []
       @enums = []
     end
 
     def class(named: nil, fully_qualified_name: nil)
       classes.find { |c| c.name == named || c.fully_qualified_name == fully_qualified_name }
+    end
+
+    def struct(named: nil, fully_qualified_name: nil)
+      structs.find { |s| s.name == named || s.fully_qualified_name == fully_qualified_name }
     end
 
     def interface(named: nil, fully_qualified_name: nil)

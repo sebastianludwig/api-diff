@@ -43,6 +43,26 @@ class SwiftInterfaceParserTest < Minitest::Test
     assert_equal "class Fourth : Codable, Hashable", fourth.declaration
   end
 
+  def test_struct
+    input = <<~EOF
+      public struct First {
+      }
+      public struct Second : Package.Parent {
+      }
+    EOF
+
+    api = parse(input)
+    structs = api.structs
+
+    first = structs[0]
+    assert_equal "First", first.name
+    assert_equal "struct First", first.declaration
+
+    second = structs[1]
+    assert_equal "Second", second.name
+    assert_equal "struct Second : Parent", second.declaration
+  end
+
   def test_properties
     input = <<~EOF
       public class FirstClass {
