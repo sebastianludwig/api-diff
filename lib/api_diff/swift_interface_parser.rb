@@ -75,10 +75,10 @@ module ApiDiff
     def parse_extension(content, container_types)
       name = content.match(/extension ([\w\.]+)/)[1]
 
-      base_type = api.class(fully_qualified_name: qualified_name(name, container_types))
-      base_type ||= api.struct(fully_qualified_name: qualified_name(name, container_types))
-      base_type ||= api.interface(fully_qualified_name: qualified_name(name, container_types))
-      base_type ||= api.enum(fully_qualified_name: qualified_name(name, container_types))
+      base_type = api.class(fully_qualified_name: name)
+      base_type ||= api.struct(fully_qualified_name: name)
+      base_type ||= api.interface(fully_qualified_name: name)
+      base_type ||= api.enum(fully_qualified_name: name)
       raise Error.new "Unable to find base type for extension `#{name}`" if base_type.nil?
       base_type.parents.append(*parse_parents(content)).uniq!
       base_type.properties.append(*parse_properties(content)).uniq!
